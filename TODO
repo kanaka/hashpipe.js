@@ -1,0 +1,13 @@
+- popup control menu:
+    - select self as leader (default to first)
+    - configure server location (default to location.hostname)
+    - user name entry
+    - connect button
+    - option to sync scroll position
+    - option to sync arrow keys and or space event?
+
+    - show connect status
+    - show other connected users
+
+- show other connected users mouse positions, different colors,
+  translucent with user name
