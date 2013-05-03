@@ -14,6 +14,8 @@
     <div style="padding-top: 5%">
       <a href="https://github.com/kanaka/hashpipe.js">github.com/kanaka/hashpipe.js</a>
       <br/>
+      <a id="bookmarklet" href="">bookmarklet</a>
+      <br/>
       <br/>
       <a name="red"></a>
       <div style="color: red;">
@@ -238,9 +240,14 @@
     <script>
         window.onkeydown = function (evt) {
             var dir = {37: "prev", 39: "next"}[evt.keyCode];
-            if (!dir) { return true; }
-            hashpipe[dir]();
+            if (dir) {
+                hashpipe[dir]();
+            }
         };
+        var burl = location.protocol + "//" + location.host + "/" + "hashpipe.all.js",
+            b = document.getElementById("bookmarklet");
+
+            b.href = 'javascript:(function(){var d=document,s=d.createElement("script");s.src="'+burl+'";d.body.appendChild(s);})();'
     </script>
   </body>
 </html>

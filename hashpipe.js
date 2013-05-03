@@ -6,12 +6,26 @@
  * See README.md for usage instructions.
  */
 
+var hashpipeURI = "ws://" + window.location.host;
+
+
+// Load as soon as document.body is available
+function HPload (action) {
+    if (document.body) {
+        action();
+    } else {
+        window.addEventListener('load', action, false);
+    }
+}
+
 var HPCounter = 0;
 
 function HashPipe() {
     "use strict";
 
-    var ctrl    = document.createElement("nav"),
+    var pipe = new Pipe(),
+        lasthash = null,
+        ctrl    = document.createElement("nav"),
         content = document.createElement("div"),
         styles  = document.createElement("style"),
         toggleB = document.createElement("div"),
@@ -62,7 +76,7 @@ function HashPipe() {
     function prev(){ move(-1); }
 
     // Control Content
-    content.innerHTML = "<div>Controls</div>";
+    content.innerHTML = "<div>HashPipe Controls</div>";
     ctrl.appendChild(content);
 
     // Next and previous buttons
@@ -87,6 +101,8 @@ function HashPipe() {
     s += "  padding: 2px;";
     s += "  margin: 3px;";
     s += "  border: solid #C0C0C0 1px;";
+    s += "  background: #F0F0F0;";
+    s += "  z-index: 10000;";
     s += "}";
     s += ".hashpipe .button {";
     s += "  text-align: right;";
@@ -97,45 +113,69 @@ function HashPipe() {
     s += "}";
     styles.innerHTML = s;
 
-    window.addEventListener('load', function () {
+    //////////////////////
+
+    // Setup the Pipe and handle hash changes
+
+    // We got a state change from another client
+    pipe.on("stateChange", function (newState) {
+        console.log("got state change: ", newState);
+        if (newState.action === "hashChange") {
+            console.log("Changing hash to: " + newState.value);
+            lasthash = location.hash = newState.value;
+        }
+    });
+
+    pipe.on("serverMsg", function(html) {
+        var msg = $('#message')[0];
+        msg.style.background = "#fe8";
+        msg.innerHTML = html;
+    });
+
+    //
+    // Intercept changes to the hash value
+    //
+    function hashchange () {
+        if (location.hash !== lasthash) {
+            console.log("detected local hash change");
+            var newState = {action: "hashChange", value: location.hash};
+            pipe.changeState(newState);
+            lasthash = newState.value;
+        }
+        return true;
+    }
+
+    window.addEventListener("hashchange", hashchange, false);
+
+    // Monkey patch to catch history change
+    (function(){
+        var pushState = history.pushState,
+            replaceState = history.replaceState;
+        history.pushState = function () {
+            pushState.apply(history, arguments);
+            hashchange();
+        };
+        history.replaceState = function () {
+            replaceState.apply(history, arguments);
+            hashchange();
+        };
+    })();
+
+    setInterval(hashchange, 500); // And just for good measure
+
+
+    // Load the controls
+    HPload(function() {
         document.body.appendChild(styles);
         document.body.appendChild(ctrl);
-    }, false);
+    });
 
-    return {toggle: toggle, prev: prev, next: next};
+    // Return the public API functions
+    return {toggle: toggle,
+            prev: prev,
+            next: next,
+            connect: pipe.connect};
 }
 
-
-var pipe = new Pipe(),
-    hashpipe = new HashPipe();
-
-pipe.lasthash = null;
-
-pipe.on("stateChange", function (newState) {
-    console.log("got state change: ", newState);
-    if (newState.action === "hashChange") {
-        console.log("Changing hash to: " + newState.value);
-        pipe.lasthash = location.hash = newState.value;
-    }
-});
-
-pipe.on("serverMsg", function(html) {
-    var msg = $('#message')[0];
-    msg.style.background = "#fe8";
-    msg.innerHTML = html;
-});
-
-window.addEventListener("hashchange", function () {
-    if (location.hash !== pipe.lasthash) {
-        console.log("detected local hash change");
-        var newState = {action: "hashChange", value: location.hash};
-        pipe.changeState(newState);
-        pipe.lasthash = newState.value;
-    }
-    return true;
-}, false);
-
-window.addEventListener('load', function () {
-    pipe.connect("ws://" + window.location.host);
-}, false);
-
+var hashpipe = new HashPipe();
+HPload(function() { hashpipe.connect(hashpipeURI); });
