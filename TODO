@@ -1,6 +1,9 @@
+- channels
+    - client sends channel in order to get messages
+
 - popup control menu:
+    * configure server location (default to location.hostname)
     - select self as leader (default to first)
-    - configure server location (default to location.hostname)
     - user name entry
     - connect button
     - option to sync scroll position

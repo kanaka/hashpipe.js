@@ -10,8 +10,8 @@ function Pipe() {
     "use strict";
     var ws, clientId, connected,
         currentState = null,
-        onStateChange = null, // state change handler
-        onServerMsg = null,
+        onStateChange = null, onServerMsg = null,
+        onOpen = null, onClose = null,
         netDebug = 5;
 
     function changeState(newState) {
@@ -25,6 +25,7 @@ function Pipe() {
         ws.onopen = function () {
             console.log("WebSocket connection opened");
             connected = true;
+            if (onOpen) { onOpen(); }
         };
         ws.onmessage = function (e) {
             if (netDebug > 0) {
@@ -62,9 +63,8 @@ function Pipe() {
             } else {
                 msg += "No connection to server";
             }
-            if (onServerMsg) {
-                onServerMsg(msg);
-            }
+            if (onServerMsg) { onServerMsg(msg); }
+            if (onClose) { onClose(); }
         };
     }
 
@@ -73,12 +73,15 @@ function Pipe() {
             onStateChange = handler;
         } else if (eventName === "serverMsg") {
             onServerMsg = handler;
+        } else if (eventName === "open") {
+            onServerMsg = handler;
         }
     }
 
     return {getWS: function(){ return ws; },
             on: on,
             connect: connect,
+            isConnected: function(){ return connected; },
             changeState: changeState};
 
 };

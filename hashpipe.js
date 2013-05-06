@@ -9,15 +9,6 @@
 var hashpipeURI = "ws://" + window.location.host;
 
 
-// Load as soon as document.body is available
-function HPload (action) {
-    if (document.body) {
-        action();
-    } else {
-        window.addEventListener('load', action, false);
-    }
-}
-
 var HPCounter = 0;
 
 function HashPipe() {
@@ -25,24 +16,15 @@ function HashPipe() {
 
     var pipe = new Pipe(),
         lasthash = null,
-        ctrl    = document.createElement("nav"),
-        content = document.createElement("div"),
-        styles  = document.createElement("style"),
-        toggleB = document.createElement("div"),
-        nextB   = document.createElement("span"),
-        prevB   = document.createElement("span"),
+        hp_id    = "hashpipe_" + (++HPCounter) + "_",
+        $id      = function(id){return document.getElementById(hp_id + id);},
+        ctrl     = document.createElement("nav"),
+        styles   = document.createElement("style"),
+        toggleB  = document.createElement("div"),
         active = true,
         down = "&#11015;", up = "&#11014;",
         left = "&#9668;", right = "&#9658;",
-        s = "";
-
-    HPCounter +=1;
-    ctrl.id = "hashpipe_ctrl_" + HPCounter;
-    ctrl.className = "hashpipe";
-    toggleB.className = "button";
-    nextB.className = "button next";
-    prevB.className = "button prev";
-    content.className = "content";
+        h = "", s = "";
 
     function toggle() {
         if (active) {
@@ -75,45 +57,10 @@ function HashPipe() {
     function next(){ move(1); }
     function prev(){ move(-1); }
 
-    // Control Content
-    content.innerHTML = "<div>HashPipe Controls</div>";
-    ctrl.appendChild(content);
-
-    // Next and previous buttons
-    prevB.innerHTML = "prev#";
-    prevB.onclick = prev;
-    content.appendChild(prevB);
-    nextB.innerHTML = "next#";
-    nextB.onclick = next;
-    content.appendChild(nextB);
-
-    // Maximize/minimize button
-    toggleB.innerHTML = right;
-    toggleB.onclick = toggle;
-
-    ctrl.appendChild(toggleB);
-
-    // Control CSS
-    s += ".hashpipe {";
-    s += "  position: fixed;";
-    s += "  bottom: 0;";
-    s += "  right: 0;";
-    s += "  padding: 2px;";
-    s += "  margin: 3px;";
-    s += "  border: solid #C0C0C0 1px;";
-    s += "  background: #F0F0F0;";
-    s += "  z-index: 10000;";
-    s += "}";
-    s += ".hashpipe .button {";
-    s += "  text-align: right;";
-    s += "  cursor: pointer;";
-    s += "}";
-    s += ".hashpipe .next, .hashpipe .prev {";
-    s += "  margin: 5px;";
-    s += "}";
-    styles.innerHTML = s;
-
-    //////////////////////
+    function connect() {
+        var uri = $id("server").value;
+        pipe.connect(uri);
+    }
 
     // Setup the Pipe and handle hash changes
 
@@ -139,8 +86,10 @@ function HashPipe() {
         if (location.hash !== lasthash) {
             console.log("detected local hash change");
             var newState = {action: "hashChange", value: location.hash};
-            pipe.changeState(newState);
             lasthash = newState.value;
+            if (pipe.isConnected()) {
+                pipe.changeState(newState);
+            }
         }
         return true;
     }
@@ -163,12 +112,69 @@ function HashPipe() {
 
     setInterval(hashchange, 500); // And just for good measure
 
+    ///////////////////////////////////////////
+    // Render the controls
+    ///////////////////////////////////////////
 
-    // Load the controls
-    HPload(function() {
+    // Control CSS
+    s += ".hashpipe {";
+    s += "  position: fixed;";
+    s += "  bottom: 0;";
+    s += "  right: 0;";
+    s += "  padding: 2px;";
+    s += "  margin: 3px;";
+    s += "  border: solid #C0C0C0 1px;";
+    s += "  background: #F0F0F0;";
+    s += "  z-index: 10000;";
+    s += "}";
+    s += ".hashpipe .button {";
+    s += "  text-align: right;";
+    s += "  cursor: pointer;";
+    s += "}";
+    s += ".hashpipe .next, .hashpipe .prev {";
+    s += "  margin: 5px;";
+    s += "}";
+    s += ".hashpipe .connect {";
+    s += "  display: block;";
+    s += "}";
+    styles.innerHTML = s;
+
+    ctrl.id = hp_id + "ctrl";
+    ctrl.className = "hashpipe";
+
+    // Control Content
+    h += '<div class="content">';
+    h += '  <div><b>HashPipe.js Controls</b></div>';
+    h += '  Server <input id="' + hp_id + 'server"/><br/>';
+    h += '  <button id="' + hp_id + 'connect" class="button connect">Connect</button>';
+    h += '  <button id="' + hp_id + 'prev" class="button prev">Prev</button>';
+    h += '  <button id="' + hp_id + 'next" class="button next">Next</button>';
+    h += '</div>';
+    ctrl.innerHTML = h;
+
+    // Maximize/minimize toggle button
+    toggleB.className = "button";
+    toggleB.innerHTML = right;
+    toggleB.onclick = toggle;
+
+    ctrl.appendChild(toggleB);
+
+    // Show/activate the controls
+    function init() {
         document.body.appendChild(styles);
         document.body.appendChild(ctrl);
-    });
+        $id("connect").onclick = connect;
+        $id("prev").onclick = prev;
+        $id("next").onclick = next;
+        $id("server").value = hashpipeURI;
+    }
+
+    // Load as soon as document.body is available
+    if (document.body) {
+        init();
+    } else {
+        window.addEventListener('load', init, false);
+    }
 
     // Return the public API functions
     return {toggle: toggle,
@@ -178,4 +184,3 @@ function HashPipe() {
 }
 
 var hashpipe = new HashPipe();
-HPload(function() { hashpipe.connect(hashpipeURI); });
