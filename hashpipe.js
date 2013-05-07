@@ -58,8 +58,10 @@ function HashPipe() {
     function prev(){ move(-1); }
 
     function connect() {
-        var uri = $id("server").value;
-        pipe.connect(uri);
+        pipe.connect($id("server").value);
+    }
+    function disconnect() {
+        pipe.disconnect();
     }
 
     // Setup the Pipe and handle hash changes
@@ -71,6 +73,19 @@ function HashPipe() {
             console.log("Changing hash to: " + newState.value);
             lasthash = location.hash = newState.value;
         }
+    });
+
+    pipe.on("open", function() {
+        console.log("pipe opened");
+        $id("server").disabled = true;
+        $id("connect").innerHTML = "Disconnect";
+        $id("connect").onclick = disconnect;
+    });
+    pipe.on("close", function() {
+        console.log("pipe closed");
+        $id("server").disabled = false;
+        $id("connect").innerHTML = "Connect";
+        $id("connect").onclick = connect;
     });
 
     pipe.on("serverMsg", function(html) {

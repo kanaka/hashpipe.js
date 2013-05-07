@@ -67,20 +67,23 @@ function Pipe() {
             if (onClose) { onClose(); }
         };
     }
+    function disconnect() {
+        console.log("Disconnecting from server");
+        ws.close();
+    }
 
     function on(eventName, handler) {
-        if (eventName === "stateChange") {
-            onStateChange = handler;
-        } else if (eventName === "serverMsg") {
-            onServerMsg = handler;
-        } else if (eventName === "open") {
-            onServerMsg = handler;
+        switch (eventName) {
+        case "stateChange": onStateChange = handler; break;
+        case "open":        onOpen = handler; break;
+        case "close":       onClose = handler; break;
         }
     }
 
     return {getWS: function(){ return ws; },
             on: on,
             connect: connect,
+            disconnect: disconnect,
             isConnected: function(){ return connected; },
             changeState: changeState};
 
