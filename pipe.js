@@ -37,6 +37,8 @@ function Pipe() {
             var msg = JSON.parse(e.data);
             if(msg.action === "assignId") {
                 clientId = msg.id;
+            } else if (msg.action === "serverMsg") {
+                if (onServerMsg) { onServerMsg(msg.value); }
             } else {
                 currentState = msg;
                 // Notify if it's from somebody else
@@ -58,8 +60,6 @@ function Pipe() {
                 if (e.reason) {
                 msg += ": " + e.reason;
                 }
-                msg += "<br>You can also run your own server. " +
-                    "Get the code <a href='https://github.com/kanaka/hashpipe.js'>on github</a>.<br>";
             } else {
                 msg += "No connection to server";
             }
@@ -75,6 +75,7 @@ function Pipe() {
     function on(eventName, handler) {
         switch (eventName) {
         case "stateChange": onStateChange = handler; break;
+        case "serverMsg":   onServerMsg = handler; break;
         case "open":        onOpen = handler; break;
         case "close":       onClose = handler; break;
         }

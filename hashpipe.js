@@ -29,11 +29,11 @@ function HashPipe() {
     function toggle() {
         if (active) {
             active = false;
-            content.style.display = "none";
+            $id("content").style.display = "none";
             toggleB.innerHTML = left;
         } else {
             active = true;
-            content.style.display = "";
+            $id("content").style.display = "";
             toggleB.innerHTML = right;
         }
     }
@@ -58,6 +58,7 @@ function HashPipe() {
     function prev(){ move(-1); }
 
     function connect() {
+        $id("message").innerHTML = "&nbsp;";
         pipe.connect($id("server").value);
     }
     function disconnect() {
@@ -80,17 +81,19 @@ function HashPipe() {
         $id("server").disabled = true;
         $id("connect").innerHTML = "Disconnect";
         $id("connect").onclick = disconnect;
+        toggleB.style.color = "#4c5";
     });
     pipe.on("close", function() {
         console.log("pipe closed");
         $id("server").disabled = false;
         $id("connect").innerHTML = "Connect";
         $id("connect").onclick = connect;
+        toggleB.style.color = "#d44";
     });
 
     pipe.on("serverMsg", function(html) {
-        var msg = $('#message')[0];
-        msg.style.background = "#fe8";
+        console.log("server message: " + html);
+        var msg = $id('message');
         msg.innerHTML = html;
     });
 
@@ -138,8 +141,8 @@ function HashPipe() {
     s += "  right: 0;";
     s += "  padding: 2px;";
     s += "  margin: 3px;";
-    s += "  border: solid #C0C0C0 1px;";
-    s += "  background: #F0F0F0;";
+    s += "  border: solid #888 1px;";
+    s += "  background: #EEE;";
     s += "  z-index: 10000;";
     s += "}";
     s += ".hashpipe .button {";
@@ -152,14 +155,18 @@ function HashPipe() {
     s += ".hashpipe .connect {";
     s += "  display: block;";
     s += "}";
+    s += ".hashpipe .message {";
+    s += "  background: #ffb";
+    s += "}";
     styles.innerHTML = s;
 
     ctrl.id = hp_id + "ctrl";
     ctrl.className = "hashpipe";
 
     // Control Content
-    h += '<div class="content">';
+    h += '<div id="' + hp_id + 'content" class="content">';
     h += '  <div><b>HashPipe.js Controls</b></div>';
+    h += '  <div id="' + hp_id + 'message" class="message">&nbsp;</div>';
     h += '  Server <input id="' + hp_id + 'server"/><br/>';
     h += '  <button id="' + hp_id + 'connect" class="button connect">Connect</button>';
     h += '  <button id="' + hp_id + 'prev" class="button prev">Prev</button>';
@@ -168,7 +175,7 @@ function HashPipe() {
     ctrl.innerHTML = h;
 
     // Maximize/minimize toggle button
-    toggleB.className = "button";
+    toggleB.className = "button toggle";
     toggleB.innerHTML = right;
     toggleB.onclick = toggle;
 
